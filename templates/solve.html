@@ -1,0 +1,108 @@
+<script type="module">
+    import { Cube } from '../../freecube/src/model/cube.js'
+    import {
+    Solver,
+    matchOrientationRule,
+    matchPermutationRule,
+    isOrientationSolved,
+    isPermutationSolved
+    } from '../../freecube/src/model/solver.js'
+    import { OLL, PLL } from '../../freecube/src/model/rules.js'
+    var scramble = document.querySelector("#scramblecontainer")
+    var step = document.querySelector("#stepcontainer").innerHTML
+    scramble = scramble.innerHTML.replaceAll("P", "'").split("_")
+    var scramble_copy = scramble;
+
+    for (var i = scramble.length-1; i >= 0; i--) {
+        if (scramble[i].includes("2")) {
+            var move = scramble[i][0]
+            scramble[i] = move
+            scramble.splice(i, 0, move);
+        }
+    }
+    var cube = new Cube(null, scramble)
+    console.log(cube)
+    var solver = new Solver(cube);
+    var solution = null;
+
+    switch (step) {
+        case 'Cross':
+            solution = solver.solveCross();   
+            solver.solveCross().forEach(moves => solver.cube.move(moves));
+            console.log("Scramble:");
+            console.log(scramble.join(" "));
+            console.log("Complete solution:");
+            console.log(solver.cube.moves.slice(scramble.length).join(" "));
+            break;
+        case 'F2L':
+            var cross_sol = solver.solveCross();
+            solver.solveCross().forEach(moves => solver.cube.move(moves));
+            solution = solver.solveF2L();
+            solver.solveF2L().forEach(moves => solver.cube.move(moves));
+            console.log("Scramble:");
+            console.log(scramble.join(" "));
+            console.log("Complete solution:");
+            console.log(solver.cube.moves.slice(scramble.length).join(" "));
+            break;
+        case 'OLL':
+            var cross_sol = solver.solveCross();
+            solver.solveCross().forEach(moves => solver.cube.move(moves));
+            var f2l_sol = solver.solveF2L();
+            solver.solveF2L().forEach(moves => solver.cube.move(moves));
+            solution = solver.solveOLL();
+            solver.cube.move(solver.solveOLL() || [])
+            console.log("Scramble:");
+            console.log(scramble.join(" "));
+            console.log("Complete solution:");
+            console.log(solver.cube.moves.slice(scramble.length).join(" "));
+            break;
+        case 'PLL':
+            var cross_sol = solver.solveCross();
+            solver.solveCross().forEach(moves => solver.cube.move(moves));
+            var f2l_sol = solver.solveF2L();
+            solver.solveF2L().forEach(moves => solver.cube.move(moves));
+            var oll_sol = solver.solveOLL();
+            solver.cube.move(solver.solveOLL() || [])
+            solution = solver.solvePLL();
+            solver.cube.move(solver.solvePLL() || [])
+            console.log("Scramble:");
+            console.log(scramble.join(" "));
+            console.log("Complete solution:");
+            console.log(solver.cube.moves.slice(scramble.length).join(" "));
+            break;
+        default:
+            console.log("Please pass correct step.");
+        }
+    
+    console.log(solution)
+    var solutionArray = []
+    
+    if (solution.length > 0) {
+        if (Array.isArray(solution[0])) {
+            solution.forEach((piece)=>{
+                if (piece !== null) {
+                    piece.forEach((move)=>{
+                        solutionArray.push(move)
+                    });
+                }
+            });
+        }
+        else {
+            solutionArray = solution;
+        }
+    }
+
+    console.log(solutionArray)
+
+    // var solutionContainer = document.querySelector("#solutioncontainer")
+    var solutionContainer = document.querySelector("body")
+    solutionContainer.innerHTML = solutionArray.join(" ");
+
+</script>
+
+<body></body>
+<h1 hidden id="scramblecontainer" >{{scramble}}</h1>
+<h1 hidden id="stepcontainer" >{{step}}</h1>
+<!-- <h1 id="solutioncontainer">NOTHING</h1> -->
+
+

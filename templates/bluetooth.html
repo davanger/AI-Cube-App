@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <title>Brief Cubing</title>
+        <script async src="https://www.googletagmanager.com/gtag/js?id=UA-75630988-2"></script>
+        <script>
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', 'UA-75630988-2');
+        </script>
+        <meta charset="UTF-8">
+        <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+        <link rel="icon" type="image/png" sizes="96x96" href="favicon-96x96.png">
+        <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="stylesheet" href="briefcubing/jquery/jquery.mobile-1.4.5.min.css" />
+        <link rel="stylesheet" href="briefcubing/theme-classic.css" />
+        <link rel="stylesheet" href="briefcubing/spectrum/spectrum.css" />
+        <link rel="stylesheet" href="briefcubing/styles.css" />
+        <script src="briefcubing/jquery/jquery-1.11.1.min.js"></script>
+        <script src="briefcubing/jquery/jquery.mobile-1.4.5.min.js"></script>
+        <script src="briefcubing/cube.js"></script>
+        <script src="briefcubing/display.js"></script>
+        <script src="briefcubing/lzstring.js"></script>
+        <script src="briefcubing/btcube.js"></script>
+        <script src="briefcubing/settings.js"></script>
+        <script src="briefcubing/algs.js"></script>
+        <script src="briefcubing/localization.js"></script>
+        <script src="briefcubing/ui.js"></script>
+        <script src="briefcubing/nosleep.min.js"></script>
+        <script src="briefcubing/spectrum/spectrum.js"></script>
+        
+        <script>
+            // Solver Block
+
+            import { Cube } from '../../freecube/src/model/cube.js'
+            import {
+            Solver,
+            matchOrientationRule,
+            matchPermutationRule,
+            isOrientationSolved,
+            isPermutationSolved
+            } from '../../freecube/src/model/solver.js'
+            import { OLL, PLL } from '../../freecube/src/model/rules.js'
+
+            function solve_scramble(scramble, step){
+                // var scramble = document.querySelector("#scramblecontainer")
+                // var step = document.querySelector("#stepcontainer").innerHTML
+                // var scramble = document.querySelector("#scramblecontainer")
+                // var step = document.querySelector("#stepcontainer").innerHTML
+                // scramble = scramble.innerHTML.replaceAll("P", "'").split("_")
+                var scramble_copy = scramble;
+
+                for (var i = scramble.length-1; i >= 0; i--) {
+                    if (scramble[i].includes("2")) {
+                        var move = scramble[i][0]
+                        scramble[i] = move
+                        scramble.splice(i, 0, move);
+                    }
+                }
+                var cube = new Cube(null, scramble)
+                console.log(cube)
+                var solver = new Solver(cube);
+                var solution = null;
+                var cross_sol = null;
+                var f2l_sol = null;
+                var oll_sol = null;
+                var pll_sol = null;
+
+                switch (step) {
+                    case 'Cross':
+                        solution = solver.solveCross();   
+                        solver.solveCross().forEach(moves => solver.cube.move(moves));
+                        // console.log("Scramble:");
+                        // console.log(scramble.join(" "));
+                        // console.log("Complete solution:");
+                        // console.log(solver.cube.moves.slice(scramble.length).join(" "));
+                        break;
+                    case 'F2L':
+                        var cross_sol = solver.solveCross();
+                        solver.solveCross().forEach(moves => solver.cube.move(moves));
+                        var f2l_sol = solver.solveF2L();
+                        solution = f2l_sol;
+                        solver.solveF2L().forEach(moves => solver.cube.move(moves));
+                        // console.log("Scramble:");
+                        // console.log(scramble.join(" "));
+                        // console.log("Complete solution:");
+                        // console.log(solver.cube.moves.slice(scramble.length).join(" "));
+                        break;
+                    case 'OLL':
+                        var cross_sol = solver.solveCross();
+                        solver.solveCross().forEach(moves => solver.cube.move(moves));
+                        var f2l_sol = solver.solveF2L();
+                        solver.solveF2L().forEach(moves => solver.cube.move(moves));
+                        var oll_sol = solver.solveOLL();
+                        solution = oll_sol;
+                        solver.cube.move(solver.solveOLL() || [])
+                        // console.log("Scramble:");
+                        // console.log(scramble.join(" "));
+                        // console.log("Complete solution:");
+                        // console.log(solver.cube.moves.slice(scramble.length).join(" "));
+                        break;
+                    case 'PLL':
+                        var cross_sol = solver.solveCross();
+                        solver.solveCross().forEach(moves => solver.cube.move(moves));
+                        var f2l_sol = solver.solveF2L();
+                        solver.solveF2L().forEach(moves => solver.cube.move(moves));
+                        var oll_sol = solver.solveOLL();
+                        solver.cube.move(solver.solveOLL() || [])
+                        var pll_sol = solver.solvePLL();
+                        solution = pll_sol;
+                        solver.cube.move(solver.solvePLL() || [])
+                        // console.log("Scramble:");
+                        // console.log(scramble.join(" "));
+                        // console.log("Complete solution:");
+                        // console.log(solver.cube.moves.slice(scramble.length).join(" "));
+                        break;
+                    default:
+                        console.log("Please pass correct step.");
+                    }
+                
+                
+                console.log(output)
+                var solutionArray = []
+                
+                if (solution.length > 0) {
+                    if (Array.isArray(solution[0])) {
+                        solution.forEach((piece)=>{
+                            if (piece !== null) {
+                                piece.forEach((move)=>{
+                                    solutionArray.push(move)
+                                });
+                            }
+                        });
+                    }
+                    else {
+                        solutionArray = solution;
+                    }
+                }
+
+                output = {
+                    original_scramble: scramble_copy,
+                    scramble: scramble,
+                    step: step,
+                    solution: solutionArray,
+                    step_solutions: {
+                        "Cross": cross_sol,
+                        "F2L": f2l_sol,
+                        "OLL": oll_sol,
+                        "PLL": pll_sol
+                    }
+                }
+
+                console.log(solutionArray)
+                console.log(output)
+
+                // var solutionContainer = document.querySelector("#solutioncontainer")
+                // var solutionContainer = document.querySelector("body")
+                // solutionContainer.innerHTML = solutionArray.join(" ");
+                return output;
+            }
+
+            // https://blog.revillweb.com/open-vs-closed-shadow-dom-9f3d7427d1af
+            Element.prototype._attachShadow = Element.prototype.attachShadow;
+                Element.prototype.attachShadow = function () {
+                return this._attachShadow( { mode: "open" } );
+            };
+            var nosleep = new NoSleep();
+
+            function allowSleep(allow) {
+                if (allow || Settings.values.allowSleep) {
+                    nosleep.disable();
+                } else {
+                    nosleep.enable();
+                }
+            }
+
+            function updateVisualization(scramble, solution) {
+                var player = document.getElementById("raw_player");
+                player.experimentalSetupAlg = scramble;
+                // player.experimentalSetupAlg = "U R L F D B U' R' L' F' D' B'";
+                player.alg = "B B U R R L' F L U U B B U' R' F R U U L L B U B' L U L' U U' R U R' U R U R' L U L' U' R' U R U' B' U B U L U' L' U' F U' F' U L' U L U U B U L U' L' B' U F R U R' U' F' U U R U R' U' R' U F R U R U' R' F' U R' U U R U";
+            }
+            
+            function get_scramble() {
+                // Create a request variable and assign a new XMLHttpRequest object to it.
+                var request = new XMLHttpRequest()
+                scramble = null;
+                solution = null;
+                // Open a new connection, using the GET request on the URL endpoint
+                request.open('GET', 'http://127.0.0.1:5000/get_scramble', true)
+
+                request.onload = function () {
+                    if (request.status >= 200 && request.status < 400) {
+                        // Success!
+                        // console.log(request.responseText);
+                        // var response = JSON.parse(request.responseText);
+                        var response = request.responseText;
+                        console.log(response);
+
+                        scramble = response.split(" ");
+                        for (var i = scramble.length-1; i >= 0; i--) {
+                            if (scramble[i].includes("2")) {
+                                var move = scramble[i][0]
+                                scramble[i] = move
+                                scramble.splice(i, 0, move);
+                            }
+                        }
+
+                        urlScramble = scramble.join("_");
+                        urlScramble = urlScramble.replaceAll("'", "P");
+                        var request2 = new XMLHttpRequest()
+                        request2.open('GET', 'http://127.0.0.1:5000/solve/PLL/' + urlScramble, true)
+                        request2.onload = function () {
+                            if (request2.status >= 200 && request2.status < 400) {
+                                var response = request2.responseText;
+                                solution = response;
+                            }
+                            updateVisualization(scramble, solution);
+                        }
+                        request2.send();
+                    }
+                }
+                request.send();
+            }
+            
+
+            $(window).resize(setMainHeightToFit);
+
+            function setMainHeightToFit() {
+                var screenHeight = $.mobile.getScreenHeight();
+                var header = $(".ui-header").hasClass("ui-header-fixed") ? $(".ui-header").outerHeight()  - 1 : $(".ui-header").outerHeight();
+                var footer = $(".ui-footer").hasClass("ui-footer-fixed") ? $(".ui-footer").outerHeight() - 1 : $(".ui-footer").outerHeight();
+                var contentHeight = $(".ui-content").outerHeight() - $(".ui-content").height();
+                var content = screenHeight - header - footer - contentHeight;
+                $(".ui-content").height(content);
+            }
+
+            $(document).on("pagecreate", "#main", function() {
+                buildAlgOptions();
+                $("#colorSchemeU").spectrum({
+                    showButtons: false,
+                    containerClassName: "spectrum-container",
+                    replacerClassName: "spectrum-replacer",
+                    change: function(c) { setColorScheme("colorSchemeU", c.toHexString()); } });
+                $("#colorSchemeD").spectrum({
+                    showButtons: false,
+                    containerClassName: "spectrum-container",
+                    replacerClassName: "spectrum-replacer",
+                    change: function(c) { setColorScheme("colorSchemeD", c.toHexString()); } });
+                $("#colorSchemeL").spectrum({
+                    showButtons: false,
+                    containerClassName: "spectrum-container",
+                    replacerClassName: "spectrum-replacer",
+                    change: function(c) { setColorScheme("colorSchemeL", c.toHexString()); } });
+                $("#colorSchemeR").spectrum({
+                    showButtons: false,
+                    containerClassName: "spectrum-container",
+                    replacerClassName: "spectrum-replacer",
+                    change: function(c) { setColorScheme("colorSchemeR", c.toHexString()); } });
+                $("#colorSchemeF").spectrum({
+                    showButtons: false,
+                    containerClassName: "spectrum-container",
+                    replacerClassName: "spectrum-replacer",
+                    change: function(c) { setColorScheme("colorSchemeF", c.toHexString()); } });
+                $("#colorSchemeB").spectrum({
+                    showButtons: false,
+                    containerClassName: "spectrum-container",
+                    replacerClassName: "spectrum-replacer",
+                    change: function(c) { setColorScheme("colorSchemeB", c.toHexString()); } });
+            });
+
+            $(document).on("pagebeforeshow", "#main", function(event) {
+                localize();
+                setMainHeightToFit();
+                if (!BtCube.connected()) Ui.showConnectButton();
+                Ui.next();
+                // $("#cube").bind("click", Ui.adjustAUF);
+            });
+
+            $(document).on("panelbeforeopen", "#options", function() {
+                settingsToUi();
+            });
+
+            var colors = ["yellow", "white", "blue", "green", "red", "orange"];
+
+            function settingsToUi() {
+                algIndex = 0;
+                $("#auf").prop('value', Settings.values.randomAuf ? "on" : "off").slider('refresh');
+                $("#order").prop('value', Settings.values.randomOrder).selectmenu('refresh');
+                $("#simple").prop('value', Settings.values.simpleDiagram ? "on" : "off").slider('refresh');
+                $("#llHide").prop('value', Settings.values.llHide).selectmenu("refresh");
+                for (var c in Settings.values.upColors) {
+                    $('#' + c).prop('checked', Settings.values.upColors[c]).checkboxradio('refresh');
+                }
+                for (var i = 0; i < colors.length; i++) {
+                    $('#' + colors[i] + "Swatch").css("backgroundColor", Display.faceToCssColor("UDLRFB"[i]));
+                }
+                for (var a in Settings.values.algs) {
+                    var id = Settings.values.algs[a];
+                    $('#' + id).prop('checked', true).checkboxradio('refresh');
+                }
+                var htm = "";
+                for (var l in Localization.langs) {
+                    var lang = Localization.langs[l];
+                    var chosen = Settings.values.lang || "en";
+                    htm += '<option id="lang_' + l + '" value="' + l + '"' + (chosen == l ? ' selected="selected"' : '') + '>' + Localization.getString("lang_" + l) + '</option>';
+                }
+                var timeout = Settings.values.timeout;
+                $("#timeout").prop('value', timeout).slider('refresh');
+                $("#allowSleep").prop('value', Settings.values.allowSleep ? "on" : "off").slider('refresh');
+                document.getElementById("timeout_value").innerText = timeout == 10.5 ? '∞' : timeout;
+                document.getElementById("language").innerHTML = htm;
+                $("#language").selectmenu("refresh");
+                $("#colorSchemeU").spectrum("set", Display.faceToCssColor("U"));
+                $("#colorSchemeD").spectrum("set", Display.faceToCssColor("D"));
+                $("#colorSchemeL").spectrum("set", Display.faceToCssColor("L"));
+                $("#colorSchemeR").spectrum("set", Display.faceToCssColor("R"));
+                $("#colorSchemeF").spectrum("set", Display.faceToCssColor("F"));
+                $("#colorSchemeB").spectrum("set", Display.faceToCssColor("B"));
+
+                settingsUpdate(); // consistency checks
+            }
+
+            function settingsUpdate() {
+                Settings.values.randomAuf = document.getElementById("auf").value == "on";
+                Settings.values.randomOrder = $("#order option:selected").val();
+                Settings.values.simpleDiagram = document.getElementById("simple").value == "on";
+                Settings.values.llHide = $("#llHide option:selected").val();
+                var upcols = Settings.values.upColors;
+                for (var c in colors) {
+                    var col = colors[c];
+                    upcols[col] = document.getElementById(col).checked;
+                }
+                if (!upcols.yellow && !upcols.white && !upcols.red && !upcols.orange && !upcols.green && !upcols.blue) {
+                    $("#yellow").prop('checked', true).checkboxradio('refresh'); // default
+                    upcols.yellow = true;
+                }
+                Settings.values.algs = [];
+                for (var s in Algs.sets) {
+                    var set = Algs.sets[s];
+                    var some = false;
+                    var all = true;
+                    for (var a in set.algs) {
+                        var id = s + '_' + set.algs[a].id;
+                        var cb = document.getElementById(id);
+                        if (cb && cb.checked) {
+                            some = true;
+                            Settings.values.algs.push(id);
+                        } else {
+                            all = false;
+                        }
+                    }
+                    $('#' + s).prop('checked', all).checkboxradio('refresh');
+                    document.getElementById(s + "_title").style.color = (some ? "#6ad" : "white");
+                }
+                Settings.values.timeout = document.getElementById("timeout").value;
+                document.getElementById("timeout_value").innerText = Settings.values.timeout == 10.5 ? '∞' : Settings.values.timeout;
+                Settings.values.allowSleep = document.getElementById("allowSleep").value == "on";
+                Settings.values.lang = $("#language option:selected").val();
+                Settings.save();
+                Ui.next();
+            }
+
+            function localize() {
+                $("#drills").text(Localization.getString("briefDrills"));
+                for (var l in Localization.langs) {
+                    $("#lang_" + l).text(Localization.getString("lang_" + l));
+                }
+                for (var s in Algs.sets) {
+                    $("#all_" + s).text(Localization.getString("allCases").replace("[ALG]", Algs.sets[s].name));
+                    $("#info_" + s).text(Localization.getString("moreInfo"));
+                }
+                $("#auf_label").text(Localization.getString("randomAuf"));
+                $("#auf").next("div").children("span:nth-child(1)").text(Localization.getString("on"));
+                $("#auf").next("div").children("span:nth-child(2)").text(Localization.getString("off"));
+                $("#order_label").text(Localization.getString("randomOrder"));
+                $("#random_off").text(Localization.getString("off"));
+                $("#random_balanced").text(Localization.getString("randomBalanced"));
+                $("#random_weighted_incorrect").text(Localization.getString("randomWeightedIncorrect"));
+                $("#order").selectmenu("refresh");
+                $("#simple_label").text(Localization.getString("simplifiedDiagram"));
+                $("#hide_label").text(Localization.getString("llHide"));
+                $("#hide_none").text(Localization.getString("llHideNone"));
+                $("#hide_back").text(Localization.getString("llHideBack"));
+                $("#hide_back_left").text(Localization.getString("llHideBackLeft"));
+                $("#hide_back_right").text(Localization.getString("llHideBackRight"));
+                $("#llHide").selectmenu("refresh");
+                $("#simple").next("div").children("span:nth-child(1)").text(Localization.getString("on"));
+                $("#simple").next("div").children("span:nth-child(2)").text(Localization.getString("off"));
+                $("#timeout_label").text(Localization.getString("timeout"));
+                $("#allowSleep_label").text(Localization.getString("allowSleep"));
+                $("#allowSleep").next("div").children("span:nth-child(1)").text(Localization.getString("on"));
+                $("#allowSleep").next("div").children("span:nth-child(2)").text(Localization.getString("off"));
+                $("#upColors_label").html(Localization.getString("upColors") + ' <a href="#colorScheme" data-rel="popup" style="font-size: small; float: right">' + Localization.getString("customScheme") + '</a>');
+                $("#customSchemeReset").text(Localization.getString("customSchemeReset"));
+                $("#feedback").text(Localization.getString("feedback"));
+                $("#btCubeConnect").text(Localization.getString("btCubeConnect"));
+                $("#btCubeDisconnect").text(Localization.getString("btCubeDisconnect"));
+                // $("#btCubeBuy").text(Localization.getString("btCubeBuy"));
+                $("#retry").text(Localization.getString("retry"));
+                $("#next").text(Localization.getString("next"));
+                $("#visualcube").html(Localization.getString("diagramCredit").replace("[LINK]", '<a href="http://cube.crider.co.uk/visualcube.php" target="_blank">VisualCube</a>'));
+            }
+
+            function localizationUpdate() {
+                Settings.values.lang = $("#language option:selected").val();
+                localize();
+                settingsUpdate();
+            }
+
+            function settingsAllCasesUpdate(name) {
+                var all = document.getElementById(name).checked;
+                var set = Algs.sets[name];
+                for (var a in set.algs) {
+                    $('#' + name + '_' + set.algs[a].id).prop('checked', all).checkboxradio('refresh');
+                }
+                settingsUpdate();
+            }
+
+            function upColorToRot() {
+                var upcols = Settings.values.upColors;
+                if (upcols.yellow) return "";
+                if (upcols.white) return "x2";
+                if (upcols.red) return "x";
+                if (upcols.orange) return "x'";
+                if (upcols.green) return "z'";
+                if (upcols.blue) return "z";
+            }
+
+            var lastRot = undefined;
+            function buildAlgOptions() {
+                var rot = upColorToRot();
+                if (rot == lastRot) return;
+                lastRot = rot;
+                var htm = "";
+                for (var s in Algs.sets) {
+                    var set = Algs.sets[s];
+                    htm += '<div id="cmllFieldset" data-role="collapsible"><h3><span id="' + s + '_title">' + set.name + '</span></h3>';
+                    htm += '<input id="' + s + '" type="checkbox" onchange="settingsAllCasesUpdate(\'' + s + '\')" data-mini="true" /><label id="all_' + s + '" for="' + s + '">' + Localization.getString("allCases").replace("[ALG]", set.name) + '</label>';
+                    htm += '<fieldset data-role="controlgroup" data-type="horizontal">';
+                    for (var a in set.algs) {
+                        var alg = set.algs[a];
+                        var id = s + '_' + alg.id;
+                        var auf = Settings.values.algAufPrefs[id] || "";
+                        var diag = Display.diagramAlg(rot, auf, alg, "5.1em");
+                        htm += '<input id="' + id + '" type="checkbox" onchange="settingsUpdate()" data-mini="true" /><label for="' + id + '"><span id="diag_' + id + '">' + diag + '</span></label>';
+                    }
+                    htm += '</fieldset>';
+                    htm += '<a id="info_' + s + '" target="_blank" href="' + set.source + '">' + Localization.getString("moreInfo") + '</a>';
+                    htm += '</div>';
+                }
+                document.getElementById("algs").innerHTML = htm;
+                $("#options").trigger("create");
+            }
+
+            function updateAlgColors() {
+                var rot = upColorToRot();
+                for (var s in Algs.sets) {
+                    var set = Algs.sets[s];
+                    for (var a in set.algs) {
+                        var alg = set.algs[a];
+                        var algId = s + '_' + alg.id;
+                        var id = "diag_" + algId;
+                        var auf = Settings.values.algAufPrefs[algId] || "";
+                        var diag = Display.diagramAlg(rot, auf, alg, "5.1em");
+                        document.getElementById(id).innerHTML = diag;
+                    }
+                }
+            }
+
+            function setColorScheme(id, color) {
+                Settings.values[id] = color;
+                settingsToUi();
+                updateAlgColors();
+            }
+
+            function resetColorScheme() {
+                Settings.values.colorSchemeU = "#EF0";
+                Settings.values.colorSchemeD = "#FFF";
+                Settings.values.colorSchemeL = "#08F";
+                Settings.values.colorSchemeR = "#0C0";
+                Settings.values.colorSchemeF = "#F10";
+                Settings.values.colorSchemeB = "#F90";
+                settingsToUi();
+                updateAlgColors();
+            }
+
+            function moveForward() {
+                const playerComponent = document.querySelector("#cool_player");
+                console.log(playerComponent.shadowRoot)
+                const buttonPanel = playerComponent.shadowRoot.querySelector('div').querySelector('twisty-control-button-panel')
+                console.log(buttonPanel)
+                const forwardButtonComponent = buttonPanel.shadowRoot.querySelector('div').querySelectorAll("twisty-control-button")[4]
+                console.log(forwardButtonComponent)
+                var forward_button = forwardButtonComponent.shadowRoot.querySelector('div').querySelector('button');
+
+                console.log(forward_button)
+                forward_button.click();
+            }
+
+        </script>
+    </head>
+    <body>
+        <div id="main" data-role="page">
+            
+            <div id="diagram" role="main" class="ui-content" style="margin-left: -16px">
+                <div id="btCube" style="margin-top: -30px; margin-bottom: -20px">
+                    <button id="btCubeConnect" onclick="Ui.btCubeConnect()" class="ui-btn ui-mini"></button>
+                </div>
+                <h1 hidden id="status" style="text-align: center; width: 100%; overflow: hidden; margin-bottom: 80px" style="display: none"></h1>
+                <div hidden id="cube" style="text-align: center; margin-top: -80px;"></div>
+                <div hidden id="message" style="text-align: center; margin-top: -3em"></div>
+                <script src="https://cdn.cubing.net/esm/cubing/twisty" type="module" defer></script>
+
+                <twisty-player style="margin: auto; padding-top: 2em"id="cool_player" experimental-setup-alg="F U2 L2 B2 F' U L2 U R2 D2 L' B L2 B' R2 U2"
+                alg="B U B' U F F U' B B U' F' L F"></twisty-player>
+                <twisty-player style="margin: auto; padding-top: 2em"id="raw_player"></twisty-player>
+                <button id="callback_button"  onclick="moveForward()" class="ui-btn ui-mini">Cool button</button>
+                <button id="callback_button"  onclick="get_scramble()" class="ui-btn ui-mini">update button</button>
+            <!--     <button id="callback_button" onclick="Ui.btCubeConnect()" class="ui-btn ui-mini"></button> -->
+                
+            </div>
+            <div hidden data-role="footer" data-position="fixed" style="height:52px">
+                <button hidden id="retry" onclick="Ui.retry()" class="ui-btn-left ui-btn ui-btn-inline ui-mini ui-corner-all ui-btn-icon-left ui-icon-refresh"></button>
+                <button hidden id="next" onclick="Ui.next()" class="ui-btn-right ui-btn ui-btn-inline ui-mini ui-corner-all ui-btn-icon-right ui-icon-carat-r"></button>
+            </div>
+            <div id="options" data-role="panel" data-display="overlay">
+                <div id="btCubeDisconnectSection" style="display:none">
+                    <button id="btCubeDisconnect" onclick="allowSleep(true); Ui.btCubeDisconnect()" class="ui-btn ui-mini" data-mini="true"></button>
+                    <hr />
+                </div>
+                
+                <div id="algs" data-role="collapsibleset" data-mini="true"></div>
+                
+            </div>
+            
+            <div id="bluetooth-help" data-role="popup" data-transition="pop">
+                <div style="padding: 1em">
+                    <h1 id="btError"></h1>
+                    <p id="btSupport"></p>
+                    <ul>
+                        <li id="btAndroid"></li>
+                        <li id="btIOS"></li>
+                        <li id="btMacOS"></li>
+                        <li id="btLinux"></li>
+                        <li id="btWindows"></li>
+                    </ul>
+                    <a id="btInfo" target="_blank" href="https://github.com/WebBluetoothCG/web-bluetooth/blob/gh-pages/implementation-status.md#chrome"></a>
+                </div>
+            </div>
+            <div id="popup" data-role="popup" data-transition="pop" style="padding: 1em; margin-top: 1.9em; margin-left: 0.5em"></div>
+        </div>
+    </body>
+</html>
