@@ -44,9 +44,6 @@ def freecube():
 def bluetooth():
     return render_template("bluetooth.html")
 
-
-
-
 @app.route("/briefcubing/<path:path>")
 def briefcubing_static_dir(path):
     return send_from_directory("briefcubing/", path)

@@ -21,7 +21,7 @@
         <script src="briefcubing/jquery/jquery-1.11.1.min.js"></script>
         <script src="briefcubing/jquery/jquery.mobile-1.4.5.min.js"></script>
         <script src="briefcubing/cube.js"></script>
-        <script src="briefcubing/display.js"></script>
+        <script  src="briefcubing/display.js"></script>
         <script src="briefcubing/lzstring.js"></script>
         <script src="briefcubing/btcube.js"></script>
         <script src="briefcubing/settings.js"></script>
@@ -30,10 +30,10 @@
         <script src="briefcubing/ui.js"></script>
         <script src="briefcubing/nosleep.min.js"></script>
         <script src="briefcubing/spectrum/spectrum.js"></script>
-        
-        <script>
-            // Solver Block
 
+        <script type="module">
+            // Solver Block
+        
             import { Cube } from '../../freecube/src/model/cube.js'
             import {
             Solver,
@@ -43,15 +43,15 @@
             isPermutationSolved
             } from '../../freecube/src/model/solver.js'
             import { OLL, PLL } from '../../freecube/src/model/rules.js'
-
-            function solve_scramble(scramble, step){
+        
+            window.solve_scramble = function(scramble, step){
                 // var scramble = document.querySelector("#scramblecontainer")
                 // var step = document.querySelector("#stepcontainer").innerHTML
                 // var scramble = document.querySelector("#scramblecontainer")
                 // var step = document.querySelector("#stepcontainer").innerHTML
                 // scramble = scramble.innerHTML.replaceAll("P", "'").split("_")
                 var scramble_copy = scramble;
-
+        
                 for (var i = scramble.length-1; i >= 0; i--) {
                     if (scramble[i].includes("2")) {
                         var move = scramble[i][0]
@@ -67,10 +67,11 @@
                 var f2l_sol = null;
                 var oll_sol = null;
                 var pll_sol = null;
-
+        
                 switch (step) {
                     case 'Cross':
-                        solution = solver.solveCross();   
+                        cross_sol = solver.solveCross();
+                        solution = cross_sol;   
                         solver.solveCross().forEach(moves => solver.cube.move(moves));
                         // console.log("Scramble:");
                         // console.log(scramble.join(" "));
@@ -78,9 +79,9 @@
                         // console.log(solver.cube.moves.slice(scramble.length).join(" "));
                         break;
                     case 'F2L':
-                        var cross_sol = solver.solveCross();
+                        cross_sol = solver.solveCross();
                         solver.solveCross().forEach(moves => solver.cube.move(moves));
-                        var f2l_sol = solver.solveF2L();
+                        f2l_sol = solver.solveF2L();
                         solution = f2l_sol;
                         solver.solveF2L().forEach(moves => solver.cube.move(moves));
                         // console.log("Scramble:");
@@ -89,11 +90,11 @@
                         // console.log(solver.cube.moves.slice(scramble.length).join(" "));
                         break;
                     case 'OLL':
-                        var cross_sol = solver.solveCross();
+                        cross_sol = solver.solveCross();
                         solver.solveCross().forEach(moves => solver.cube.move(moves));
-                        var f2l_sol = solver.solveF2L();
+                        f2l_sol = solver.solveF2L();
                         solver.solveF2L().forEach(moves => solver.cube.move(moves));
-                        var oll_sol = solver.solveOLL();
+                        oll_sol = solver.solveOLL();
                         solution = oll_sol;
                         solver.cube.move(solver.solveOLL() || [])
                         // console.log("Scramble:");
@@ -102,13 +103,13 @@
                         // console.log(solver.cube.moves.slice(scramble.length).join(" "));
                         break;
                     case 'PLL':
-                        var cross_sol = solver.solveCross();
+                        cross_sol = solver.solveCross();
                         solver.solveCross().forEach(moves => solver.cube.move(moves));
-                        var f2l_sol = solver.solveF2L();
+                        f2l_sol = solver.solveF2L();
                         solver.solveF2L().forEach(moves => solver.cube.move(moves));
-                        var oll_sol = solver.solveOLL();
+                        oll_sol = solver.solveOLL();
                         solver.cube.move(solver.solveOLL() || [])
-                        var pll_sol = solver.solvePLL();
+                        pll_sol = solver.solvePLL();
                         solution = pll_sol;
                         solver.cube.move(solver.solvePLL() || [])
                         // console.log("Scramble:");
@@ -121,7 +122,7 @@
                     }
                 
                 
-                console.log(output)
+                // console.log(output)
                 var solutionArray = []
                 
                 if (solution.length > 0) {
@@ -138,8 +139,8 @@
                         solutionArray = solution;
                     }
                 }
-
-                output = {
+        
+                var output = {
                     original_scramble: scramble_copy,
                     scramble: scramble,
                     step: step,
@@ -151,16 +152,19 @@
                         "PLL": pll_sol
                     }
                 }
-
+        
                 console.log(solutionArray)
                 console.log(output)
-
+        
                 // var solutionContainer = document.querySelector("#solutioncontainer")
                 // var solutionContainer = document.querySelector("body")
                 // solutionContainer.innerHTML = solutionArray.join(" ");
                 return output;
             }
-
+        </script>
+        
+        
+        <script>
             // https://blog.revillweb.com/open-vs-closed-shadow-dom-9f3d7427d1af
             Element.prototype._attachShadow = Element.prototype.attachShadow;
                 Element.prototype.attachShadow = function () {
@@ -178,9 +182,10 @@
 
             function updateVisualization(scramble, solution) {
                 var player = document.getElementById("raw_player");
-                player.experimentalSetupAlg = scramble;
+                player.experimentalSetupAlg = scramble.join(" ");
                 // player.experimentalSetupAlg = "U R L F D B U' R' L' F' D' B'";
-                player.alg = "B B U R R L' F L U U B B U' R' F R U U L L B U B' L U L' U U' R U R' U R U R' L U L' U' R' U R U' B' U B U L U' L' U' F U' F' U L' U L U U B U L U' L' B' U F R U R' U' F' U U R U R' U' R' U F R U R U' R' F' U R' U U R U";
+                // player.alg = "B B U R R L' F L U U B B U' R' F R U U L L B U B' L U L' U U' R U R' U R U R' L U L' U' R' U R U' B' U B U L U' L' U' F U' F' U L' U L U U B U L U' L' B' U F R U R' U' F' U U R U R' U' R' U F R U R U' R' F' U R' U U R U";
+                player.alg = solution.join(" ");
             }
             
             function get_scramble() {
@@ -200,26 +205,30 @@
                         console.log(response);
 
                         scramble = response.split(" ");
-                        for (var i = scramble.length-1; i >= 0; i--) {
-                            if (scramble[i].includes("2")) {
-                                var move = scramble[i][0]
-                                scramble[i] = move
-                                scramble.splice(i, 0, move);
-                            }
-                        }
+                        // for (var i = scramble.length-1; i >= 0; i--) {
+                        //     if (scramble[i].includes("2")) {
+                        //         var move = scramble[i][0]
+                        //         scramble[i] = move
+                        //         scramble.splice(i, 0, move);
+                        //     }
+                        // }
 
-                        urlScramble = scramble.join("_");
-                        urlScramble = urlScramble.replaceAll("'", "P");
-                        var request2 = new XMLHttpRequest()
-                        request2.open('GET', 'http://127.0.0.1:5000/solve/PLL/' + urlScramble, true)
-                        request2.onload = function () {
-                            if (request2.status >= 200 && request2.status < 400) {
-                                var response = request2.responseText;
-                                solution = response;
-                            }
-                            updateVisualization(scramble, solution);
-                        }
-                        request2.send();
+                        // urlScramble = scramble.join("_");
+                        // urlScramble = urlScramble.replaceAll("'", "P");
+                        var solution_object = window.solve_scramble(scramble, "Cross");
+                        console.log(solution_object);
+                        solution = solution_object.solution;
+                        updateVisualization(scramble, solution);
+
+                        // var request2 = new XMLHttpRequest()
+                        // request2.open('GET', 'http://127.0.0.1:5000/solve/PLL/' + urlScramble, true)
+                        // request2.onload = function () {
+                        //     if (request2.status >= 200 && request2.status < 400) {
+                        //         var response = request2.responseText;
+                        //         solution = response;
+                        //     }
+                        // }
+                        // request2.send();
                     }
                 }
                 request.send();
