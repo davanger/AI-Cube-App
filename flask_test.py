@@ -1,3 +1,5 @@
+import random
+
 from flask import Flask, render_template, send_from_directory
 import os
 
@@ -62,7 +64,12 @@ def solve(step, scramble):
 
 @app.route("/get_scramble/")
 def get_scramble():
-    return "L2 B2 D' B R' D B2 U2 L F B D2 B' R2 F D2 F2 U2 R'"
+    file_path = "scrambles.txt"
+    scramble = ""
+    with open(file_path) as f:
+        lines = f.readlines()
+        scramble = lines[random.randint(0, len(lines)-1)].replace("\n", "")
+    return scramble
 
 
 if __name__ == "__main__":
