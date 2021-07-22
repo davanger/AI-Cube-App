@@ -1,1 +1,1 @@
-web: uvicorn flask_test:app --host=0.0.0.0 --port=${​PORT:-5000}​
+web: gunicorn flask_test:app
