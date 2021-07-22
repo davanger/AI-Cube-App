@@ -62,7 +62,7 @@ def solve(step, scramble):
 
 @app.route("/get_scramble/")
 def get_scramble():
-    return "U R L F D B U' R' L' F' D' B'"
+    return "L2 B2 D' B R' D B2 U2 L F B D2 B' R2 F D2 F2 U2 R'"
 
 
 if __name__ == "__main__":

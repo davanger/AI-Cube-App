@@ -43,6 +43,8 @@
             isPermutationSolved
             } from '../../freecube/src/model/solver.js'
             import { OLL, PLL } from '../../freecube/src/model/rules.js'
+
+            
         
             window.solve_scramble = function(scramble, step){
                 // var scramble = document.querySelector("#scramblecontainer")
@@ -70,8 +72,11 @@
         
                 switch (step) {
                     case 'Cross':
+                        scramble = [...solver.cube.moves];
+
                         cross_sol = solver.solveCross();
                         solution = cross_sol;   
+                        // scramble = solver.cube.moves;
                         solver.solveCross().forEach(moves => solver.cube.move(moves));
                         // console.log("Scramble:");
                         // console.log(scramble.join(" "));
@@ -81,6 +86,7 @@
                     case 'F2L':
                         cross_sol = solver.solveCross();
                         solver.solveCross().forEach(moves => solver.cube.move(moves));
+                        scramble = [...solver.cube.moves];
                         f2l_sol = solver.solveF2L();
                         solution = f2l_sol;
                         solver.solveF2L().forEach(moves => solver.cube.move(moves));
@@ -94,6 +100,7 @@
                         solver.solveCross().forEach(moves => solver.cube.move(moves));
                         f2l_sol = solver.solveF2L();
                         solver.solveF2L().forEach(moves => solver.cube.move(moves));
+                        scramble = [...solver.cube.moves];
                         oll_sol = solver.solveOLL();
                         solution = oll_sol;
                         solver.cube.move(solver.solveOLL() || [])
@@ -103,15 +110,18 @@
                         // console.log(solver.cube.moves.slice(scramble.length).join(" "));
                         break;
                     case 'PLL':
+                    case 'total':
                         cross_sol = solver.solveCross();
                         solver.solveCross().forEach(moves => solver.cube.move(moves));
                         f2l_sol = solver.solveF2L();
                         solver.solveF2L().forEach(moves => solver.cube.move(moves));
                         oll_sol = solver.solveOLL();
                         solver.cube.move(solver.solveOLL() || [])
+                        scramble = [...solver.cube.moves];
                         pll_sol = solver.solvePLL();
                         solution = pll_sol;
                         solver.cube.move(solver.solvePLL() || [])
+
                         // console.log("Scramble:");
                         // console.log(scramble.join(" "));
                         // console.log("Complete solution:");
@@ -181,11 +191,50 @@
             }
 
             function updateVisualization(scramble, solution) {
+                window.next_steps = [...solution];
+                window.next_steps.reverse();
+                window.correction_steps = 0;
                 var player = document.getElementById("raw_player");
-                player.experimentalSetupAlg = scramble.join(" ");
+                player.timeline.tempoScale = 3;
+                var setup_alg = scramble.join(" ");
+                player.experimentalSetupAlg = setup_alg;
                 // player.experimentalSetupAlg = "U R L F D B U' R' L' F' D' B'";
                 // player.alg = "B B U R R L' F L U U B B U' R' F R U U L L B U B' L U L' U U' R U R' U R U R' L U L' U' R' U R U' B' U B U L U' L' U' F U' F' U L' U L U U B U L U' L' B' U F R U R' U' F' U U R U R' U' R' U F R U R U' R' F' U R' U U R U";
-                player.alg = solution.join(" ");
+                var player_alg = solution.join(" ");
+                player.alg = player_alg;
+                
+            }
+            function split_double_moves(scramble) {
+                var scramble_copy = scramble.split(" ");
+                for (var i = scramble_copy.length-1; i >= 0; i--) {
+                    if (scramble_copy[i].includes("2")) {
+                        var move = scramble_copy[i][0]
+                        scramble_copy[i] = move
+                        scramble_copy.splice(i, 0, move);
+                    }
+                }
+                scramble_copy = scramble_copy.join(" ");
+                return scramble_copy;
+            }
+
+            function aggregate_solution(solution) {
+                var solutionArray = []
+                
+                if (solution.length > 0) {
+                    if (Array.isArray(solution[0])) {
+                        solution.forEach((piece)=>{
+                            if (piece !== null) {
+                                piece.forEach((move)=>{
+                                    solutionArray.push(move)
+                                });
+                            }
+                        });
+                    }
+                    else {
+                        solutionArray = solution;
+                    }
+                }
+                return solutionArray;
             }
             
             function get_scramble() {
@@ -205,6 +254,9 @@
                         console.log(response);
 
                         scramble = response.split(" ");
+                        window.scramble = scramble;
+                        get_solution(scramble, "total");
+
                         // for (var i = scramble.length-1; i >= 0; i--) {
                         //     if (scramble[i].includes("2")) {
                         //         var move = scramble[i][0]
@@ -212,13 +264,20 @@
                         //         scramble.splice(i, 0, move);
                         //     }
                         // }
-
+                        
                         // urlScramble = scramble.join("_");
                         // urlScramble = urlScramble.replaceAll("'", "P");
-                        var solution_object = window.solve_scramble(scramble, "Cross");
-                        console.log(solution_object);
-                        solution = solution_object.solution;
-                        updateVisualization(scramble, solution);
+                        
+                        //REPLACED BY GET SOLUTION
+                        // var solution_object = window.solve_scramble(scramble, "PLL");
+                        // console.log(solution_object);
+                        // solution = solution_object.solution;
+                        // updateVisualization(solution_object.scramble, solution);
+
+                        // var feedback_div = document.getElementById("user_feedback")
+                        // feedback_div.innerHTML = solution.join(" ");
+
+                        
 
                         // var request2 = new XMLHttpRequest()
                         // request2.open('GET', 'http://127.0.0.1:5000/solve/PLL/' + urlScramble, true)
@@ -229,10 +288,134 @@
                         //     }
                         // }
                         // request2.send();
+                        
+                        //REPLACED BY GET SOLUTION
+                        // var request2 = new XMLHttpRequest()
+                        // request2.open('POST', 'https://ai-cube-api.herokuapp.com/predict_oll', true)
+                        // request2.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+                        // request2.onload = function () {
+                        //     if (request2.status >= 200 && request2.status < 400) {
+                        //         var response = request2.responseText;
+                        //         solution = response;
+                        //         window.next_steps = [...solution.split(" ")];
+                        //         window.next_steps.reverse();
+                        //         window.correction_steps = 0;
+                        //     }
+                        // }
+                        // request2.send(JSON.stringify({"scramble_s": "U R L F D B U' R' L' F' D' B'"}));
+                        
                     }
                 }
                 request.send();
             }
+
+            function get_solution(scramble, step) {
+                var ai_endpoint = null
+                var ai_url = "https://ai-cube-api.herokuapp.com/"
+
+                switch(step) {
+                    case "Cross":
+                        ai_endpoint = "predict_cross"
+                        break;
+                    case "F2L":
+                        ai_endpoint = "predict_f2l"
+                        break;
+                    case "OLL":
+                        ai_endpoint = "predict_oll"
+                        break;
+                    case "PLL":
+                        ai_endpoint = "predict_pll"
+                        break;
+                    case "total":
+                        ai_endpoint = "solve_cube";
+                        break;
+                    default:
+                        console.log("Please pass correct step.");
+                        break;
+                }
+
+                switch(window.solution_origin) {
+                    case "solver":
+                        var solution_object = window.solve_scramble(scramble, step);
+                        console.log(solution_object);
+                        solution = solution_object.solution;
+
+                        window.cross_solution = aggregate_solution(solution_object.step_solutions["Cross"]);
+                        window.f2l_solution = aggregate_solution(solution_object.step_solutions["F2L"]);
+                        window.oll_solution = aggregate_solution(solution_object.step_solutions["OLL"]);
+                        window.pll_solution = aggregate_solution(solution_object.step_solutions["PLL"]);
+                        window.base_scramble = solution_object.original_scramble;
+                        window.base_scramble = window.base_scramble.join(" ");
+
+                        solution = window.cross_solution;
+                        window.next_steps = [...solution];
+
+                        // window.next_steps = [...(solution.split(" "))];
+                        window.next_steps.reverse();
+                        window.correction_steps = 0;
+                        visualization_scramble = split_double_moves(window.base_scramble);
+                        visualization_scramble = visualization_scramble.split(" ");
+                        updateVisualization(visualization_scramble, solution);
+                        // updateVisualization(solution_object.scramble, solution);
+
+                        var feedback_div = document.getElementById("user_feedback")
+                        feedback_div.innerHTML = solution.join(" ");
+                        break;
+                    case "ai":
+                        var request2 = new XMLHttpRequest()
+                        request2.open('POST', ai_url + ai_endpoint, true)
+                        request2.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+                        request2.onload = function () {
+                            if (request2.status >= 200 && request2.status < 400) {
+                                var response = request2.responseText;
+                                //parse json response
+                                var solution_object = JSON.parse(response);
+
+                                if (solution_object.solution_found == true) {
+                                    window.cross_solution = solution_object.step_solutions["Cross"];
+                                    window.f2l_solution = solution_object.step_solutions["F2L"];
+                                    window.oll_solution = solution_object.step_solutions["OLL"];
+                                    window.pll_solution = solution_object.step_solutions["PLL"];
+                                    window.base_scramble = solution_object.original_scramble;
+                                    solution = window.cross_solution;
+                                    window.next_steps = [...solution];
+                                    window.next_steps.reverse();
+                                    window.correction_steps = 0;
+                                    visualization_scramble = split_double_moves(solution_object.original_scramble);
+                                    visualization_scramble = visualization_scramble.split(" ");
+                                    updateVisualization(visualization_scramble, solution);
+                                    var feedback_div = document.getElementById("user_feedback")
+                                    feedback_div.innerHTML = solution.join(" ");
+                                }
+                                else {
+                                    window.solution_origin = "solver";
+                                    get_solution(scramble, step);
+                                }
+                            }
+                        }
+                        var scramble_to_send = scramble.join(" ");
+                        request2.send(JSON.stringify({"scramble_s": scramble_to_send}));
+                        break;
+                    default:
+                        console.log("Define a correct solution type.");
+                        break;
+                }
+            }
+
+            // function get_solver_solution(scramble) {
+            //     var solution_object = window.solve_scramble(scramble, "Cross");
+            //     console.log(solution_object);
+            //     solution = solution_object.solution;
+            //     updateVisualization(solution_object.scramble, solution);
+            //     window.scramble = scramble;
+
+            //     var feedback_div = document.getElementById("user_feedback")
+            //     feedback_div.innerHTML = solution.join(" ");
+
+            //     window.next_steps = [...solution];
+            //     window.next_steps.reverse();
+            //     window.correction_steps = 0;
+
             
 
             $(window).resize(setMainHeightToFit);
@@ -497,7 +680,31 @@
             }
 
             function moveForward() {
-                const playerComponent = document.querySelector("#cool_player");
+                const playerComponent = document.querySelector("#raw_player");
+                console.log(playerComponent.shadowRoot)
+                const buttonPanel = playerComponent.shadowRoot.querySelector('div').querySelector('twisty-control-button-panel')
+                console.log(buttonPanel)
+                const forwardButtonComponent = buttonPanel.shadowRoot.querySelector('div').querySelectorAll("twisty-control-button")[4]
+                console.log(forwardButtonComponent)
+                var forward_button = forwardButtonComponent.shadowRoot.querySelector('div').querySelector('button');
+
+                console.log(forward_button)
+                forward_button.click();
+            }
+            function resetVisualization() {
+                const playerComponent = document.querySelector("#raw_player");
+                console.log(playerComponent.shadowRoot)
+                const buttonPanel = playerComponent.shadowRoot.querySelector('div').querySelector('twisty-control-button-panel')
+                console.log(buttonPanel)
+                const forwardButtonComponent = buttonPanel.shadowRoot.querySelector('div').querySelectorAll("twisty-control-button")[1]
+                console.log(forwardButtonComponent)
+                var reset_button = forwardButtonComponent.shadowRoot.querySelector('div').querySelector('button');
+
+                console.log(reset_button)
+                reset_button.click();
+            }
+            function setup_visualization() {
+                const playerComponent = document.querySelector("#raw_player");
                 console.log(playerComponent.shadowRoot)
                 const buttonPanel = playerComponent.shadowRoot.querySelector('div').querySelector('twisty-control-button-panel')
                 console.log(buttonPanel)
@@ -509,6 +716,67 @@
                 forward_button.click();
             }
 
+            function update_solve_method(method){
+                window.solution_origin = method;
+            }
+            update_solve_method("ai");
+
+            function initialize_problem(){
+                window.current_step = "Cross"
+                get_scramble();
+                resetVisualization();
+            }
+
+            function f2l_click() {
+                window.current_step = "F2L";
+                var base_scramble = window.base_scramble.split(" ");
+                var cross_sol = [...window.cross_solution];
+                var current_scramble = base_scramble.concat(cross_sol);
+
+                visualization_scramble = split_double_moves(current_scramble.join(" "));
+                visualization_scramble = visualization_scramble.split(" ");
+                updateVisualization(visualization_scramble, window.f2l_solution);
+                // updateVisualization(current_scramble, window.f2l_solution);
+                var feedback_div = document.getElementById("user_feedback")
+                feedback_div.innerHTML = window.f2l_solution.join(" ");
+                resetVisualization();
+            }
+
+            function oll_click() {
+                window.current_step = "OLL";
+                var base_scramble = window.base_scramble.split(" ");
+                // var base_scramble = [...window.base_scramble];
+                var cross_sol = [...window.cross_solution];
+                var f2l_sol = [...window.f2l_solution];
+                var current_scramble = base_scramble.concat(cross_sol, f2l_sol);
+
+                visualization_scramble = split_double_moves(current_scramble.join(" "));
+                visualization_scramble = visualization_scramble.split(" ");
+                updateVisualization(visualization_scramble, window.oll_solution);
+                // updateVisualization(current_scramble, window.oll_solution);
+                var feedback_div = document.getElementById("user_feedback")
+                feedback_div.innerHTML = window.oll_solution.join(" ");
+                resetVisualization();
+            }
+
+            function pll_click() {
+                window.current_step = "PLL";
+                var base_scramble = window.base_scramble.split(" ");
+                // var base_scramble = [...window.base_scramble];
+                var cross_sol = [...window.cross_solution];
+                var f2l_sol = [...window.f2l_solution];
+                var oll_sol = [...window.oll_solution];
+                var current_scramble = base_scramble.concat(cross_sol, f2l_sol, oll_sol);
+                
+                visualization_scramble = split_double_moves(current_scramble.join(" "));
+                visualization_scramble = visualization_scramble.split(" ");
+                updateVisualization(visualization_scramble, window.pll_solution);
+                // updateVisualization(current_scramble, window.pll_solution);
+                var feedback_div = document.getElementById("user_feedback")
+                feedback_div.innerHTML = window.pll_solution.join(" ");
+                resetVisualization();
+            }
+
         </script>
     </head>
     <body>
@@ -518,17 +786,52 @@
                 <div id="btCube" style="margin-top: -30px; margin-bottom: -20px">
                     <button id="btCubeConnect" onclick="Ui.btCubeConnect()" class="ui-btn ui-mini"></button>
                 </div>
+                <div id="user_feedback"></div>
                 <h1 hidden id="status" style="text-align: center; width: 100%; overflow: hidden; margin-bottom: 80px" style="display: none"></h1>
                 <div hidden id="cube" style="text-align: center; margin-top: -80px;"></div>
                 <div hidden id="message" style="text-align: center; margin-top: -3em"></div>
                 <script src="https://cdn.cubing.net/esm/cubing/twisty" type="module" defer></script>
 
-                <twisty-player style="margin: auto; padding-top: 2em"id="cool_player" experimental-setup-alg="F U2 L2 B2 F' U L2 U R2 D2 L' B L2 B' R2 U2"
-                alg="B U B' U F F U' B B U' F' L F"></twisty-player>
-                <twisty-player style="margin: auto; padding-top: 2em"id="raw_player"></twisty-player>
+                <!-- <twisty-player style="margin: auto; padding-top: 2em"id="cool_player" experimental-setup-alg="F U2 L2 B2 F' U L2 U R2 D2 L' B L2 B' R2 U2"
+                alg="B U B' U F F U' B B U' F' L F"></twisty-player> -->
+                <twisty-player style="margin: auto; padding-top: 2em"id="raw_player" setspeed="3" set-speed="3"></twisty-player>
                 <button id="callback_button"  onclick="moveForward()" class="ui-btn ui-mini">Cool button</button>
                 <button id="callback_button"  onclick="get_scramble()" class="ui-btn ui-mini">update button</button>
             <!--     <button id="callback_button" onclick="Ui.btCubeConnect()" class="ui-btn ui-mini"></button> -->
+
+                <h3>Select solution type</h3>
+                <!-- create 2 radio buttons vertically -->
+                <div id="color_scheme" data-role="controlgroup" data-type="horizontal" data-mini="true">
+                    <input type="radio" id="radio_ai" value="ai" name="solution_group" onchange="update_solve_method('ai')" checked>
+                    <label for="radio_ai">AI Model</label>
+                    <input type="radio" id="radio_solver" value="solver" name="solution_group" onchange="update_solve_method('solver')">
+                    <label for="radio_solver">Rule Based Model</label>
+                </div>
+
+                <h3>Solution steps</h3>
+                <!-- create 4 buttons side by side -->
+                <div id="options" data-role="controlgroup" data-type="horizontal" data-mini="true">
+                    <button id="cross_button" onclick="initialize_problem()" class="ui-btn ui-mini">Start / Cross</button>
+                    <button id="f2l_button" onclick="f2l_click()" class="ui-btn ui-mini" disabled>F2L</button>
+                    <button id="oll_button" onclick="oll_click()" class="ui-btn ui-mini" disabled>OLL</button>
+                    <button id="pll_button" onclick="pll_click()" class="ui-btn ui-mini" disabled>PLL</button>
+                </div>
+
+
+                <!-- <form>
+                    <fieldset id="solution_group"> -->
+                    <!-- add event to radio button change -->
+                    <!-- <input id="solution_radio" type="radio" name="solution" value="solution" onchange="settingsUpdate()" checked /> -->
+                    <!-- <input type="radio" id="radio_ai" value="ai" name="solution_group" onchange="update_solve_method('ai')" checked>
+                    <label for="radio_ai">AI Model</label>
+                    <input type="radio" id="radio_solver" value="solver" name="solution_group" onchange="update_solve_method('solver')">
+                    <label for="radio_solver">Rule Based Model</label>
+                    </fieldset>
+                </form> -->
+
+                
+
+                
                 
             </div>
             <div hidden data-role="footer" data-position="fixed" style="height:52px">
