@@ -250,7 +250,7 @@
                 scramble = null;
                 solution = null;
                 // Open a new connection, using the GET request on the URL endpoint
-                request.open('GET', 'http://127.0.0.1:5000/get_scramble', true)
+                request.open('GET', '/get_scramble', true)
 
                 request.onload = function () {
                     if (request.status >= 200 && request.status < 400) {
