@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
     <head>
-        <title>Brief Cubing</title>
+        <title>AI Cube Solver</title>
         <script async src="https://www.googletagmanager.com/gtag/js?id=UA-75630988-2"></script>
         <script>
             window.dataLayer = window.dataLayer || [];
@@ -319,6 +319,18 @@
                 request.send();
             }
 
+            function lets_scramble() {
+                resetVisualization();
+                var visualization_scramble = window.scramble.join(" ");
+                window.scramble = split_double_moves(visualization_scramble).split(" ");
+                window.scramble = [...window.scramble];
+                window.base_scramble = [...window.scramble];
+                updateVisualization([], window.scramble);
+                var feedback_div = document.getElementById("user_feedback")
+                visualization_scramble = [...window.scramble]
+                feedback_div.innerHTML = visualization_scramble.join(" ");
+            }
+
             function get_solution(scramble, step) {
                 var ai_endpoint = null
                 var ai_url = "https://ai-cube-api.herokuapp.com/"
@@ -398,6 +410,7 @@
                                     feedback_div.innerHTML = solution.join(" ");
                                 }
                                 else {
+                                    console.log("No solution found. Using solver solution");
                                     window.solution_origin = "solver";
                                     get_solution(scramble, step);
                                 }
@@ -734,7 +747,7 @@
             function initialize_problem(){
                 window.current_step = "Cross"
                 // get_scramble();
-                get_solution(window.scramble, "total");
+                get_solution(window.base_scramble, "total");
                 resetVisualization();
             }
 
@@ -796,25 +809,25 @@
         </script>
     </head>
     <body>
-        <div id="main" data-role="page" style="width:600px; margin: auto; ">
+        <div id="main" data-role="page" style="max-width:600px; margin: auto;" >
             
             <div id="diagram" role="main" class="ui-content" style="margin-left: -16px;">
-                <h1 style="text-align: center;">Cube Solver 9000</h1>
+                <h1 style="text-align: center;">AI Cube Solver</h1>
                 <div id="btCube" style="margin-top: -30px; margin-bottom: -20px">
                     <button id="btCubeConnect" onclick="Ui.btCubeConnect()" class="ui-btn ui-mini"></button>
                 </div>
 
                 <!-- add text box -->
                 <div id="btText" style="margin-top: 30px; margin-bottom: -20px">
-                    <div style="display: grid; grid-template-columns: 350px 200px ">
-                        <div style="margin-bottom: -20px">
-                            <h3>Current scramble:</h3>
+                    <div >
+                        
+                        <h3>Current scramble:</h3>
                             <input type="text" id="btTextInput" value="Enter scramble" class="ui-mini" onchange="parse_scramble_input()" onclick="clear_textbox()" style="display:inline-block"/>
                             <!-- <label for="btTextInput" class="ui-mini ui-btn-inline ui-corner-all ui-shadow"></label> -->
-                        </div>
-                        <div style="margin-top: 40px; margin-bottom: -20px">
-                            <button id="btTextInput" onclick="get_scramble()" class="ui-btn ui-mini ui-btn-inline ui-corner-all ui-shadow ui-btn-icon-left ui-icon-search"style="display:inline-block">Get random scramble</button>
-                        </div>
+                            <div data-role="controlgroup" data-type="horizontal" style="margin-top: 40px; margin-top:0px">
+                                <button id="btTextInput" onclick="get_scramble()" class="ui-btn ui-mini ui-btn-icon-left ui-icon-search">Get random scramble</button>
+                                <button id="btTextInput" onclick="lets_scramble()" class="ui-btn ui-mini ui-btn-inline ui-shadow">Lets scramble!</button>
+                            </div>
                     </div>
                     <!-- add text field -->
                     <h3>Solution steps:</h3>
@@ -853,6 +866,7 @@
                         </div>
                     </div>
                 </div>
+                <p>Please click the <b>Start/Cross</b> button to display a solution.</p>
                 
 
 
