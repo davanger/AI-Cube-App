@@ -236,6 +236,13 @@
                 }
                 return solutionArray;
             }
+
+            function parse_scramble_input(){
+                var scramble = document.getElementById("btTextInput").value;
+                scramble = split_double_moves(scramble);
+                scramble = scramble.split(" ");
+                window.scramble = scramble;
+            }
             
             function get_scramble() {
                 // Create a request variable and assign a new XMLHttpRequest object to it.
@@ -253,9 +260,12 @@
                         var response = request.responseText;
                         console.log(response);
 
+                        document.getElementById("btTextInput").value = response;
+
                         scramble = response.split(" ");
                         window.scramble = scramble;
-                        get_solution(scramble, "total");
+                        
+                        // get_solution(scramble, "total");
 
                         // for (var i = scramble.length-1; i >= 0; i--) {
                         //     if (scramble[i].includes("2")) {
@@ -340,10 +350,10 @@
                         console.log(solution_object);
                         solution = solution_object.solution;
 
-                        window.cross_solution = aggregate_solution(solution_object.step_solutions["Cross"]);
-                        window.f2l_solution = aggregate_solution(solution_object.step_solutions["F2L"]);
-                        window.oll_solution = aggregate_solution(solution_object.step_solutions["OLL"]);
-                        window.pll_solution = aggregate_solution(solution_object.step_solutions["PLL"]);
+                        window.cross_solution = split_double_moves(aggregate_solution(solution_object.step_solutions["Cross"]).join(" ")).split(" ");
+                        window.f2l_solution = split_double_moves(aggregate_solution(solution_object.step_solutions["F2L"]).join(" ")).split(" ");
+                        window.oll_solution = split_double_moves(aggregate_solution(solution_object.step_solutions["OLL"]).join(" ")).split(" ");
+                        window.pll_solution = split_double_moves(aggregate_solution(solution_object.step_solutions["PLL"]).join(" ")).split(" ");
                         window.base_scramble = solution_object.original_scramble;
                         window.base_scramble = window.base_scramble.join(" ");
 
@@ -372,10 +382,10 @@
                                 var solution_object = JSON.parse(response);
 
                                 if (solution_object.solution_found == true) {
-                                    window.cross_solution = solution_object.step_solutions["Cross"];
-                                    window.f2l_solution = solution_object.step_solutions["F2L"];
-                                    window.oll_solution = solution_object.step_solutions["OLL"];
-                                    window.pll_solution = solution_object.step_solutions["PLL"];
+                                    window.cross_solution = split_double_moves(solution_object.step_solutions["Cross"].join(" ")).split(" ");
+                                    window.f2l_solution = split_double_moves(solution_object.step_solutions["F2L"].join(" ")).split(" ");
+                                    window.oll_solution = split_double_moves(solution_object.step_solutions["OLL"].join(" ")).split(" ");
+                                    window.pll_solution = split_double_moves(solution_object.step_solutions["PLL"].join(" ")).split(" ");
                                     window.base_scramble = solution_object.original_scramble;
                                     solution = window.cross_solution;
                                     window.next_steps = [...solution];
@@ -723,7 +733,8 @@
 
             function initialize_problem(){
                 window.current_step = "Cross"
-                get_scramble();
+                // get_scramble();
+                get_solution(window.scramble, "total");
                 resetVisualization();
             }
 
@@ -777,45 +788,72 @@
                 resetVisualization();
             }
 
+            function clear_textbox(){
+                var scramble_textbox = document.getElementById("btTextInput");
+                scramble_textbox.value = "";
+            }
+
         </script>
     </head>
     <body>
-        <div id="main" data-role="page">
+        <div id="main" data-role="page" style="width:600px; margin: auto; ">
             
-            <div id="diagram" role="main" class="ui-content" style="margin-left: -16px">
+            <div id="diagram" role="main" class="ui-content" style="margin-left: -16px;">
+                <h1 style="text-align: center;">Cube Solver 9000</h1>
                 <div id="btCube" style="margin-top: -30px; margin-bottom: -20px">
                     <button id="btCubeConnect" onclick="Ui.btCubeConnect()" class="ui-btn ui-mini"></button>
                 </div>
-                <div id="user_feedback"></div>
-                <h1 hidden id="status" style="text-align: center; width: 100%; overflow: hidden; margin-bottom: 80px" style="display: none"></h1>
-                <div hidden id="cube" style="text-align: center; margin-top: -80px;"></div>
-                <div hidden id="message" style="text-align: center; margin-top: -3em"></div>
-                <script src="https://cdn.cubing.net/esm/cubing/twisty" type="module" defer></script>
 
+                <!-- add text box -->
+                <div id="btText" style="margin-top: 30px; margin-bottom: -20px">
+                    <div style="display: grid; grid-template-columns: 350px 200px ">
+                        <div style="margin-bottom: -20px">
+                            <h3>Current scramble:</h3>
+                            <input type="text" id="btTextInput" value="Enter scramble" class="ui-mini" onchange="parse_scramble_input()" onclick="clear_textbox()" style="display:inline-block"/>
+                            <!-- <label for="btTextInput" class="ui-mini ui-btn-inline ui-corner-all ui-shadow"></label> -->
+                        </div>
+                        <div style="margin-top: 40px; margin-bottom: -20px">
+                            <button id="btTextInput" onclick="get_scramble()" class="ui-btn ui-mini ui-btn-inline ui-corner-all ui-shadow ui-btn-icon-left ui-icon-search"style="display:inline-block">Get random scramble</button>
+                        </div>
+                    </div>
+                    <!-- add text field -->
+                    <h3>Solution steps:</h3>
+                    <div id="user_feedback"></div>
+                    <h1 hidden id="status" style="text-align: center; width: 100%; overflow: hidden; margin-bottom: 80px" style="display: none"></h1>
+                    <div hidden id="cube" style="text-align: center; margin-top: -80px;"></div>
+                    <div hidden id="message" style="text-align: center; margin-top: -3em"></div>
+                </div>
+                
+                <script src="https://cdn.cubing.net/esm/cubing/twisty" type="module" defer></script>
                 <!-- <twisty-player style="margin: auto; padding-top: 2em"id="cool_player" experimental-setup-alg="F U2 L2 B2 F' U L2 U R2 D2 L' B L2 B' R2 U2"
                 alg="B U B' U F F U' B B U' F' L F"></twisty-player> -->
                 <twisty-player style="margin: auto; padding-top: 2em"id="raw_player" setspeed="3" set-speed="3"></twisty-player>
-                <button id="callback_button"  onclick="moveForward()" class="ui-btn ui-mini">Cool button</button>
-                <button id="callback_button"  onclick="get_scramble()" class="ui-btn ui-mini">update button</button>
+            <!--     <button id="callback_button"  onclick="moveForward()" class="ui-btn ui-mini">Cool button</button>
+                <button id="callback_button"  onclick="get_scramble()" class="ui-btn ui-mini">update button</button> -->
             <!--     <button id="callback_button" onclick="Ui.btCubeConnect()" class="ui-btn ui-mini"></button> -->
-
-                <h3>Select solution type</h3>
-                <!-- create 2 radio buttons vertically -->
-                <div id="color_scheme" data-role="controlgroup" data-type="horizontal" data-mini="true">
-                    <input type="radio" id="radio_ai" value="ai" name="solution_group" onchange="update_solve_method('ai')" checked>
-                    <label for="radio_ai">AI Model</label>
-                    <input type="radio" id="radio_solver" value="solver" name="solution_group" onchange="update_solve_method('solver')">
-                    <label for="radio_solver">Rule Based Model</label>
+                <div style="text-align: center; display: grid; grid-template-columns: 250px 300px ">
+                    <div>
+                        <h3>Select solution type</h3>
+                        <!-- create 2 radio buttons vertically -->
+                        <div id="color_scheme" data-role="controlgroup" data-type="horizontal" data-mini="true">
+                            <input type="radio" id="radio_ai" value="ai" name="solution_group" onchange="update_solve_method('ai')" checked>
+                            <label for="radio_ai">AI Model</label>
+                            <input type="radio" id="radio_solver" value="solver" name="solution_group" onchange="update_solve_method('solver')">
+                            <label for="radio_solver">Rule Based Model</label>
+                        </div>
+                    </div>
+                    <div>
+                        <h3>Solution steps</h3>
+                        <!-- create 4 buttons side by side -->
+                        <div id="options" data-role="controlgroup" data-type="horizontal" data-mini="true">
+                            <button id="cross_button" onclick="initialize_problem()" class="ui-btn ui-mini">Start / Cross</button>
+                            <button id="f2l_button" onclick="f2l_click()" class="ui-btn ui-mini" disabled>F2L</button>
+                            <button id="oll_button" onclick="oll_click()" class="ui-btn ui-mini" disabled>OLL</button>
+                            <button id="pll_button" onclick="pll_click()" class="ui-btn ui-mini" disabled>PLL</button>
+                        </div>
+                    </div>
                 </div>
-
-                <h3>Solution steps</h3>
-                <!-- create 4 buttons side by side -->
-                <div id="options" data-role="controlgroup" data-type="horizontal" data-mini="true">
-                    <button id="cross_button" onclick="initialize_problem()" class="ui-btn ui-mini">Start / Cross</button>
-                    <button id="f2l_button" onclick="f2l_click()" class="ui-btn ui-mini" disabled>F2L</button>
-                    <button id="oll_button" onclick="oll_click()" class="ui-btn ui-mini" disabled>OLL</button>
-                    <button id="pll_button" onclick="pll_click()" class="ui-btn ui-mini" disabled>PLL</button>
-                </div>
+                
 
 
                 <!-- <form>
@@ -848,7 +886,7 @@
                 
             </div>
             
-            <div id="bluetooth-help" data-role="popup" data-transition="pop">
+            <div hidden id="bluetooth-help" data-role="popup" data-transition="pop">
                 <div style="padding: 1em">
                     <h1 id="btError"></h1>
                     <p id="btSupport"></p>
@@ -862,7 +900,7 @@
                     <a id="btInfo" target="_blank" href="https://github.com/WebBluetoothCG/web-bluetooth/blob/gh-pages/implementation-status.md#chrome"></a>
                 </div>
             </div>
-            <div id="popup" data-role="popup" data-transition="pop" style="padding: 1em; margin-top: 1.9em; margin-left: 0.5em"></div>
+            <div hidden id="popup" data-role="popup" data-transition="pop" style="padding: 1em; margin-top: 1.9em; margin-left: 0.5em"></div>
         </div>
     </body>
 </html>

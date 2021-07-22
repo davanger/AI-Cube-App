@@ -325,6 +325,7 @@ var Ui = (function () {
             display_steps.reverse();
             var feedback_div = document.getElementById("user_feedback")
             feedback_div.innerHTML = display_steps.join(" ");
+            feedback_div.style.color = "white";
         }
         else {
             console.log("invalid twist: " + t);
@@ -342,6 +343,7 @@ var Ui = (function () {
             display_steps.reverse();
             var feedback_div = document.getElementById("user_feedback")
             feedback_div.innerHTML = display_steps.join(" ");
+            feedback_div.style.color = "red";
         }
 
         console.log("next_steps: " + window.next_steps);
