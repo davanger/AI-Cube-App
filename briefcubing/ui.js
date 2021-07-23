@@ -348,8 +348,17 @@ var Ui = (function () {
 
         console.log("next_steps: " + window.next_steps);
 
+        
+
         if (window.next_steps.length == 0) {
             update_step_button();
+        }
+        else
+        {
+            var imgNextStep = document.getElementById("imgNextStep");
+            var filename = window.next_steps[window.next_steps.length - 1] + ".png";
+            filename = filename.replace("'", "p");
+            imgNextStep.src = "images/" + filename;
         }
 
         // var now = new Date();

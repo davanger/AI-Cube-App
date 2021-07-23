@@ -202,7 +202,13 @@
                 // player.alg = "B B U R R L' F L U U B B U' R' F R U U L L B U B' L U L' U U' R U R' U R U R' L U L' U' R' U R U' B' U B U L U' L' U' F U' F' U L' U L U U B U L U' L' B' U F R U R' U' F' U U R U R' U' R' U F R U R U' R' F' U R' U U R U";
                 var player_alg = solution.join(" ");
                 player.alg = player_alg;
-                
+
+                if (window.next_steps.length > 0) {
+                    var imgNextStep = document.getElementById("imgNextStep");
+                    var filename = window.next_steps[window.next_steps.length - 1] + ".png";
+                    filename = filename.replace("'", "p");
+                    imgNextStep.src = "images/" + filename;
+                }
             }
             function split_double_moves(scramble) {
                 var scramble_copy = scramble.split(" ");
@@ -830,8 +836,16 @@
                             </div>
                     </div>
                     <!-- add text field -->
-                    <h3>Solution steps:</h3>
-                    <div id="user_feedback"></div>
+                    <div style="text-align: center; display: grid; grid-template-columns: 100px 450px ">
+                        <div>
+                            <img id="imgNextStep" src="images/U.png" style="width: 100px; height: 100px; margin-left: 0px; margin-top: 0px;">
+                        </div>
+                        <div>
+                            <h3>Solution steps:</h3>
+                            <div id="user_feedback"></div>
+                        </div>
+                    </div>
+                    
                     <h1 hidden id="status" style="text-align: center; width: 100%; overflow: hidden; margin-bottom: 80px" style="display: none"></h1>
                     <div hidden id="cube" style="text-align: center; margin-top: -80px;"></div>
                     <div hidden id="message" style="text-align: center; margin-top: -3em"></div>

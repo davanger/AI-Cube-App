@@ -54,6 +54,10 @@ def briefcubing_static_dir(path):
 def freecube_static_dir(path):
     return send_from_directory("freecube/", path)
 
+@app.route("/images/<path:path>")
+def images_static_dir(path):
+    return send_from_directory("images/", path)
+
 @app.route("/solve/<string:scramble>")
 def solve_for(scramble):
     return render_template("solve_for.html", scramble=scramble)
